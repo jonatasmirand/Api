@@ -1,0 +1,959 @@
+{
+  "info": {
+    "_postman_id": "vnw-resgate-api-organized",
+    "name": "VNW Resgate API - Organizada",
+    "description": "Collection organizada da API VNW Resgate com pastas e subpastas estruturadas por funcionalidade. Baseada no Swagger (/api-docs) e nas rotas implementadas.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminEmail",
+      "value": "admin@fingestao.com",
+      "type": "string"
+    },
+    {
+      "key": "adminPassword",
+      "value": "admin123",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "userIdCode",
+      "value": "COLE_O_ID_CODE",
+      "type": "string"
+    },
+    {
+      "key": "googleIdToken",
+      "value": "COLE_O_FIREBASE_ID_TOKEN",
+      "type": "string"
+    },
+    {
+      "key": "googleOAuthCode",
+      "value": "COLE_O_CODE_DO_CALLBACK",
+      "type": "string"
+    },
+    {
+      "key": "fileId",
+      "value": "COLE_O_ID_DO_ARQUIVO",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Autenticação",
+      "item": [
+        {
+          "name": "Cadastro e Login",
+          "item": [
+            {
+              "name": "POST - Registrar novo usuário",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Pessoa Exemplo\",\n  \"email\": \"pessoa@example.com\",\n  \"password\": \"Senha123\",\n  \"phone\": \"11999999999\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/register",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "register"
+                  ]
+                },
+                "description": "Cria um novo usuário com role padrão 'people'. Retorna token JWT automaticamente."
+              },
+              "response": []
+            },
+            {
+              "name": "POST - Login como Administrador (admin@fingestao.com)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                      "  const body = pm.response.json();",
+                      "  if (body.data && body.data.token) {",
+                      "    pm.collectionVariables.set('token', body.data.token);",
+                      "    pm.collectionVariables.set('adminToken', body.data.token);",
+                      "  }",
+                      "  if (body.data && body.data.user && body.data.user.id_code) pm.collectionVariables.set('userIdCode', body.data.user.id_code);",
+                      "  if (body.data && body.data.user && body.data.user.id) pm.collectionVariables.set('userId', body.data.user.id);",
+                      "  console.log('Admin autenticado com sucesso! Token salvo na collection.');",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "login"
+                  ]
+                },
+                "description": "Realiza login com a conta de Administrador (admin@fingestao.com). Salva o token JWT de admin automaticamente na variável {{token}} para uso em todas as outras requisições protegidas da collection."
+              },
+              "response": []
+            },
+            {
+              "name": "POST - Login com email e senha",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                      "  const body = pm.response.json();",
+                      "  if (body.data && body.data.token) pm.collectionVariables.set('token', body.data.token);",
+                      "  if (body.data && body.data.user && body.data.user.id_code) pm.collectionVariables.set('userIdCode', body.data.user.id_code);",
+                      "  if (body.data && body.data.user && body.data.user.id) pm.collectionVariables.set('userId', body.data.user.id);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"pessoa@example.com\",\n  \"password\": \"Senha123\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "login"
+                  ]
+                },
+                "description": "Autentica usuário com email e senha. Salva token automaticamente na variável {{token}}."
+              },
+              "response": []
+            },
+            {
+              "name": "POST - Login com Google (Firebase)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                      "  const body = pm.response.json();",
+                      "  if (body.data && body.data.token) pm.collectionVariables.set('token', body.data.token);",
+                      "  if (body.data && body.data.user && body.data.user.id_code) pm.collectionVariables.set('userIdCode', body.data.user.id_code);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"idToken\": \"{{googleIdToken}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/google",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "google"
+                  ]
+                },
+                "description": "Login via Google OAuth usando Firebase ID Token. Cria usuário se não existir."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Gerenciamento de Sessão",
+          "item": [
+            {
+              "name": "GET - Obter usuário autenticado (/me)",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/me",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "me"
+                  ]
+                },
+                "description": "Retorna os dados completos do usuário logado (incluindo plano associado)."
+              },
+              "response": []
+            },
+            {
+              "name": "POST - Renovar token JWT",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                      "  const body = pm.response.json();",
+                      "  if (body.data && body.data.token) pm.collectionVariables.set('token', body.data.token);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/refresh",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "refresh"
+                  ]
+                },
+                "description": "Renova o token JWT usando o token atual. Salva novo token automaticamente."
+              },
+              "response": []
+            },
+            {
+              "name": "POST - Logout (invalidar token)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "if (pm.response.code >= 200 && pm.response.code < 300) pm.collectionVariables.unset('token');"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/logout",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "logout"
+                  ]
+                },
+                "description": "Invalida o token JWT atual na blocklist. Limpa variável {{token}} automaticamente."
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 - Usuários",
+      "item": [
+        {
+          "name": "Meu Perfil",
+          "item": [
+            {
+              "name": "PUT - Atualizar meu perfil completo",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Pessoa Exemplo Atualizada\",\n  \"phone\": \"11999999999\",\n  \"avatar_url\": \"https://example.com/avatar.png\",\n  \"birth_date\": \"1990-01-15\",\n  \"address_street\": \"Rua Exemplo\",\n  \"address_number\": \"123\",\n  \"address_complement\": \"Apto 4\",\n  \"address_neighborhood\": \"Centro\",\n  \"address_city\": \"São Paulo\",\n  \"address_state\": \"SP\",\n  \"address_zip_code\": \"01001000\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users/me",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "users",
+                    "me"
+                  ]
+                },
+                "description": "Atualiza todos os campos do perfil do usuário logado. Envie apenas os campos que deseja alterar."
+              },
+              "response": []
+            },
+            {
+              "name": "PATCH - Atualizar apenas avatar",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"avatar_url\": \"https://example.com/avatar.png\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users/me",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "users",
+                    "me"
+                  ]
+                },
+                "description": "Atualização parcial para modificar apenas o avatar. Envie null para remover."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Administração (Admin/Master)",
+          "item": [
+            {
+              "name": "GET - Listar todos os usuários (paginado)",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users?page=1&limit=20&search=",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "users"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "search",
+                      "value": ""
+                    }
+                  ]
+                },
+                "description": "Lista usuários com paginação. Busca por nome ou email. Requer role master ou admin."
+              },
+              "response": []
+            },
+            {
+              "name": "GET - Obter usuário por ID ou id_code",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users/{{userId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "users",
+                    "{{userId}}"
+                  ]
+                },
+                "description": "Busca usuário por ID numérico ou UUID id_code. Requer role admin ou manager."
+              },
+              "response": []
+            },
+            {
+              "name": "POST - Criar novo Administrador (requer token admin)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                      "  const body = pm.response.json();",
+                      "  if (body.data && body.data.user && body.data.user.id_code) {",
+                      "    pm.collectionVariables.set('userIdCode', body.data.user.id_code);",
+                      "    console.log('Novo admin criado com UUID:', body.data.user.id_code);",
+                      "  }",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Novo Administrador FinGestão\",\n  \"email\": \"novo.admin@fingestao.com\",\n  \"password\": \"AdminSeguro123\",\n  \"role\": \"admin\",\n  \"phone\": \"11988887777\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "users"
+                  ]
+                },
+                "description": "Cria um novo usuário diretamente com perfil 'admin'. Requer estar autenticado como admin ou master (o header Bearer Token é enviado automaticamente usando {{token}} obtido no login de admin)."
+              },
+              "response": []
+            },
+            {
+              "name": "POST - Criar usuário (admin)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Novo Usuário\",\n  \"email\": \"novo@example.com\",\n  \"password\": \"Senha123\",\n  \"role\": \"volunteer\",\n  \"phone\": \"11999999999\",\n  \"plan_id\": 1\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "users"
+                  ]
+                },
+                "description": "Cria usuário com role específica. Roles: admin, manager, volunteer, people. Requer role admin."
+              },
+              "response": []
+            },
+            {
+              "name": "PUT - Atualizar usuário (admin/master)",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Usuário Atualizado\",\n  \"email\": \"atualizado@example.com\",\n  \"role\": \"volunteer\",\n  \"phone\": \"11999999999\",\n  \"plan_id\": 1,\n  \"avatar_url\": \"https://example.com/avatar.png\",\n  \"birth_date\": \"1990-01-15\",\n  \"address_street\": \"Rua Exemplo\",\n  \"address_number\": \"123\",\n  \"address_complement\": \"Apto 4\",\n  \"address_neighborhood\": \"Centro\",\n  \"address_city\": \"São Paulo\",\n  \"address_state\": \"SP\",\n  \"address_zip_code\": \"01001000\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users/{{userId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "users",
+                    "{{userId}}"
+                  ]
+                },
+                "description": "Atualiza usuário por ID numérico ou id_code. Requer role admin ou master."
+              },
+              "response": []
+            },
+            {
+              "name": "POST - Resetar senha por id_code",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"password\": \"NovaSenha123\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users/{{userIdCode}}/reset-password",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "users",
+                    "{{userIdCode}}",
+                    "reset-password"
+                  ]
+                },
+                "description": "Reseta senha de um usuário usando o id_code. Requer role master ou admin."
+              },
+              "response": []
+            },
+            {
+              "name": "DELETE - Excluir usuário por ID",
+              "request": {
+                "method": "DELETE",
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users/{{userId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "users",
+                    "{{userId}}"
+                  ]
+                },
+                "description": "Exclui usuário por ID numérico. Não permite excluir a própria conta. Requer role admin."
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 - Google Drive",
+      "item": [
+        {
+          "name": "OAuth2 Autorização",
+          "item": [
+            {
+              "name": "GET - Iniciar fluxo OAuth (/uploads)",
+              "request": {
+                "method": "GET",
+                "auth": {
+                  "type": "noauth"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/uploads/oauth/init",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "uploads",
+                    "oauth",
+                    "init"
+                  ]
+                },
+                "description": "Inicia fluxo OAuth2 do Google Drive. Redireciona para página de consentimento do Google."
+              },
+              "response": []
+            },
+            {
+              "name": "GET - Iniciar fluxo OAuth (/upload)",
+              "request": {
+                "method": "GET",
+                "auth": {
+                  "type": "noauth"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/upload/oauth/init",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "upload",
+                    "oauth",
+                    "init"
+                  ]
+                },
+                "description": "Alias da rota OAuth. Redireciona para consentimento do Google."
+              },
+              "response": []
+            },
+            {
+              "name": "GET - Callback OAuth (/uploads)",
+              "request": {
+                "method": "GET",
+                "auth": {
+                  "type": "noauth"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/uploads/oauth/callback?code={{googleOAuthCode}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "uploads",
+                    "oauth",
+                    "callback"
+                  ],
+                  "query": [
+                    {
+                      "key": "code",
+                      "value": "{{googleOAuthCode}}"
+                    }
+                  ]
+                },
+                "description": "Callback OAuth2. Troca o código de autorização por tokens (access_token e refresh_token)."
+              },
+              "response": []
+            },
+            {
+              "name": "GET - Callback OAuth (/upload)",
+              "request": {
+                "method": "GET",
+                "auth": {
+                  "type": "noauth"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/upload/oauth/callback?code={{googleOAuthCode}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "upload",
+                    "oauth",
+                    "callback"
+                  ],
+                  "query": [
+                    {
+                      "key": "code",
+                      "value": "{{googleOAuthCode}}"
+                    }
+                  ]
+                },
+                "description": "Alias do callback OAuth. Troca código por tokens."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Upload de Arquivos",
+          "item": [
+            {
+              "name": "POST - Upload arquivo (/uploads)",
+              "request": {
+                "method": "POST",
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "file",
+                      "type": "file",
+                      "src": ""
+                    },
+                    {
+                      "key": "folder",
+                      "value": "uploads",
+                      "type": "text"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/uploads",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "uploads"
+                  ]
+                },
+                "description": "Faz upload de arquivo para Google Drive. Cria pastas automaticamente segundo o parâmetro 'folder'."
+              },
+              "response": []
+            },
+            {
+              "name": "POST - Upload arquivo (/upload)",
+              "request": {
+                "method": "POST",
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "file",
+                      "type": "file",
+                      "src": ""
+                    },
+                    {
+                      "key": "folder",
+                      "value": "uploads",
+                      "type": "text"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/upload",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "upload"
+                  ]
+                },
+                "description": "Alias da rota de upload. Usa o mesmo handler que /api/v1/uploads."
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 - Arquivos",
+      "item": [
+        {
+          "name": "Visualização e Download",
+          "item": [
+            {
+              "name": "GET - Visualizar arquivo por ID",
+              "request": {
+                "method": "GET",
+                "auth": {
+                  "type": "noauth"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/files/{{fileId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "files",
+                    "{{fileId}}"
+                  ]
+                },
+                "description": "Proxy reverso para visualizar arquivos do Google Drive. Retorna stream inline com headers CORS."
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05 - PDF",
+      "item": [
+        {
+          "name": "Geração de PDF",
+          "item": [
+            {
+              "name": "POST - Gerar PDF a partir de HTML",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"html\": \"<!doctype html><html><body><h1>Relatório VNW Resgate</h1><p>Conteúdo do documento.</p></body></html>\",\n  \"filename\": \"relatorio.pdf\",\n  \"options\": {\n    \"format\": \"A4\",\n    \"printBackground\": true\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/pdf/generate",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "pdf",
+                    "generate"
+                  ]
+                },
+                "description": "Gera PDF usando Puppeteer a partir de HTML. Requer autenticação JWT."
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

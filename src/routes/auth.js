@@ -452,9 +452,10 @@ router.post('/logout', authenticateToken, async (req, res) => {
 
     if (token) {
       const decoded = jwt.decode(token);
+      const expiresAt = decoded && decoded.exp ? new Date(decoded.exp * 1000) : new Date(Date.now() + 24 * 60 * 60 * 1000);
       await TokenBlocklist.create({
         token,
-        expiresAt: new Date(decoded.exp * 1000)
+        expires_at: expiresAt
       });
     }
 

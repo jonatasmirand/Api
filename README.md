@@ -34,6 +34,12 @@ O sistema implementa 5 níveis de acesso hierárquicos:
 | `volunteer` | 🟢 Básico | Voluntário — acesso às funções operacionais |
 | `people` | 🔵 Padrão | Cidadão — perfil padrão no cadastro |
 
+> 💡 **Como criar o primeiro Administrador:**  
+> Como novos cadastros públicos são definidos como `people` por segurança, use o script CLI para criar um novo admin ou promover um usuário existente:  
+> ```bash
+> npm run create:admin
+> ```
+
 ### Proteções Adicionais
 - **Helmet.js** — Headers HTTP de segurança contra XSS, clickjacking, etc.
 - **Rate Limiting** — Limite de 1000 requisições por IP a cada 15 minutos
@@ -166,6 +172,14 @@ npm run dev
 | Rota | Descrição |
 |------|-----------|
 | `/api-docs` | Swagger UI — documentação interativa |
+
+### Collection do Postman
+Importe [`VNW Resgate API.postman_collection.json`](./VNW%20Resgate%20API.postman_collection.json) no Postman. A collection está organizada por autenticação, perfil, administração, Google Drive, arquivos e PDF.
+
+- Ajuste a variável `baseUrl` para a URL da API.
+- Execute um dos requests de login para salvar o JWT automaticamente na variável `token`.
+- Para testar as rotas administrativas, utilize uma conta com a role necessária e informe os IDs nas variáveis da collection.
+- As rotas de upload/OAuth e login Google também estão incluídas, embora não tenham anotações `@swagger` completas no código.
 
 ---
 

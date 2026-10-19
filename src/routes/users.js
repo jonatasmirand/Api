@@ -524,7 +524,23 @@ router.delete('/:id', authenticateToken, requireRole('admin'), async (req, res) 
   try {
     const { id } = req.params;
 
-    const user = await User.findByPk(id);
+    let where;
+    if (!isNaN(id)) {
+      where = { id: parseInt(id, 10) };
+    } else if (id.includes('@')) {
+      const normalizedEmail = id.trim().toLowerCase();
+      const dotlessEmail = normalizedEmail.replace(/\.(?=.*@)/g, '');
+      where = {
+        [Op.or]: [
+          { email: normalizedEmail },
+          { email: dotlessEmail }
+        ]
+      };
+    } else {
+      where = { id_code: id };
+    }
+
+    const user = await User.findOne({ where });
     if (!user) {
       return res.status(404).json({
         error: 'User not found',
@@ -532,7 +548,8 @@ router.delete('/:id', authenticateToken, requireRole('admin'), async (req, res) 
       });
     }
 
-    if (user.id === req.user.id) {
+    const currentUserId = req.user.userId || req.user.id;
+    if (user.id === currentUserId) {
       return res.status(400).json({
         error: 'Cannot delete self',
         message: 'Não é possível deletar sua própria conta'
