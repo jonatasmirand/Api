@@ -11,6 +11,7 @@ export interface BaseButtonProps {
   onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
   type?: 'button' | 'submit' | 'reset';
   fullWidth?: boolean;
+  title?: string;
 }
 
 export interface ButtonProps extends BaseButtonProps {

@@ -2,15 +2,19 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 
 export const LandingHeader: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
+  const isLoginPage = pathname === '/login';
+  const isCadastroPage = pathname === '/cadastro';
 
   const navLinks = [
-    { label: 'Apresentação', href: '#apresentacao' },
-    { label: 'Benefícios', href: '#beneficios' },
-    { label: 'Funcionalidades', href: '#funcionalidades' },
+    { label: 'Apresentação', href: '/#apresentacao' },
+    { label: 'Benefícios', href: '/#beneficios' },
+    { label: 'Funcionalidades', href: '/#funcionalidades' },
   ];
 
   return (
@@ -21,6 +25,7 @@ export const LandingHeader: React.FC = () => {
           <Link
             href="/"
             className="flex items-center gap-2.5 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2E9658] rounded-lg"
+            title="Ir para a página inicial"
           >
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#1F6B43] to-[#2E9658] flex items-center justify-center text-white shadow-md shadow-[#2E9658]/20 group-hover:scale-105 transition-transform">
               <svg
@@ -51,33 +56,79 @@ export const LandingHeader: React.FC = () => {
           {/* Navegação Desktop */}
           <nav className="hidden md:flex items-center gap-8" aria-label="Navegação principal">
             {navLinks.map((link) => (
-              <a
+              <Link
                 key={link.label}
                 href={link.href}
                 className="text-sm font-medium text-[#6F7771] hover:text-[#2E9658] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2E9658] rounded px-1 py-0.5"
               >
                 {link.label}
-              </a>
+              </Link>
             ))}
           </nav>
 
           {/* Ações Desktop */}
           <div className="hidden md:flex items-center gap-4">
-            <Link
-              href="/login"
-              className="text-sm font-medium text-[#202522] hover:text-[#2E9658] px-3 py-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2E9658] rounded-lg"
-            >
-              Entrar
-            </Link>
-            <Link href="/cadastro">
-              <Button
-                variant="primary"
-                size="md"
-                className="!bg-[#2E9658] hover:!bg-[#1F6B43] !text-white font-semibold shadow-sm hover:shadow-md transition-all rounded-xl"
-              >
-                Começar agora
-              </Button>
-            </Link>
+            {isLoginPage ? (
+              <>
+                <Link
+                  href="/"
+                  className="inline-flex items-center gap-1.5 text-sm font-medium text-[#6F7771] hover:text-[#202522] px-3 py-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2E9658] rounded-lg"
+                >
+                  <svg className="w-4 h-4 text-[#2E9658]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                  </svg>
+                  <span>Voltar ao início</span>
+                </Link>
+                <Link href="/cadastro">
+                  <Button
+                    variant="primary"
+                    size="md"
+                    className="!bg-[#2E9658] hover:!bg-[#1F6B43] !text-white font-semibold shadow-sm hover:shadow-md transition-all rounded-xl"
+                  >
+                    Criar conta
+                  </Button>
+                </Link>
+              </>
+            ) : isCadastroPage ? (
+              <>
+                <Link
+                  href="/"
+                  className="inline-flex items-center gap-1.5 text-sm font-medium text-[#6F7771] hover:text-[#202522] px-3 py-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2E9658] rounded-lg"
+                >
+                  <svg className="w-4 h-4 text-[#2E9658]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                  </svg>
+                  <span>Voltar ao início</span>
+                </Link>
+                <Link href="/login">
+                  <Button
+                    variant="primary"
+                    size="md"
+                    className="!bg-[#2E9658] hover:!bg-[#1F6B43] !text-white font-semibold shadow-sm hover:shadow-md transition-all rounded-xl"
+                  >
+                    Fazer login
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="text-sm font-medium text-[#202522] hover:text-[#2E9658] px-3 py-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2E9658] rounded-lg"
+                >
+                  Entrar
+                </Link>
+                <Link href="/cadastro">
+                  <Button
+                    variant="primary"
+                    size="md"
+                    className="!bg-[#2E9658] hover:!bg-[#1F6B43] !text-white font-semibold shadow-sm hover:shadow-md transition-all rounded-xl"
+                  >
+                    Começar agora
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Botão Menu Mobile */}
@@ -107,36 +158,92 @@ export const LandingHeader: React.FC = () => {
           <div className="md:hidden py-4 border-t border-[#E3E9E4] animate-toast-in">
             <div className="flex flex-col gap-3">
               {navLinks.map((link) => (
-                <a
+                <Link
                   key={link.label}
                   href={link.href}
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="px-3 py-2 text-base font-medium text-[#202522] hover:bg-[#E8F5EC] hover:text-[#2E9658] rounded-lg transition-colors"
                 >
                   {link.label}
-                </a>
+                </Link>
               ))}
               <div className="pt-3 border-t border-[#E3E9E4] flex flex-col gap-2">
-                <Link
-                  href="/login"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="w-full text-center py-2.5 text-sm font-semibold text-[#202522] hover:bg-neutral-100 rounded-lg transition-colors"
-                >
-                  Entrar na conta
-                </Link>
-                <Link
-                  href="/cadastro"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="w-full"
-                >
-                  <Button
-                    variant="primary"
-                    fullWidth
-                    className="!bg-[#2E9658] hover:!bg-[#1F6B43] !text-white font-semibold rounded-xl"
-                  >
-                    Começar agora
-                  </Button>
-                </Link>
+                {isLoginPage ? (
+                  <>
+                    <Link
+                      href="/"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="inline-flex items-center justify-center gap-2 w-full text-center py-2.5 text-sm font-semibold text-[#6F7771] hover:text-[#202522] hover:bg-neutral-100 rounded-lg transition-colors"
+                    >
+                      <svg className="w-4 h-4 text-[#2E9658]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                      </svg>
+                      <span>Voltar para a página inicial</span>
+                    </Link>
+                    <Link
+                      href="/cadastro"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="w-full"
+                    >
+                      <Button
+                        variant="primary"
+                        fullWidth
+                        className="!bg-[#2E9658] hover:!bg-[#1F6B43] !text-white font-semibold rounded-xl"
+                      >
+                        Criar conta
+                      </Button>
+                    </Link>
+                  </>
+                ) : isCadastroPage ? (
+                  <>
+                    <Link
+                      href="/"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="inline-flex items-center justify-center gap-2 w-full text-center py-2.5 text-sm font-semibold text-[#6F7771] hover:text-[#202522] hover:bg-neutral-100 rounded-lg transition-colors"
+                    >
+                      <svg className="w-4 h-4 text-[#2E9658]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                      </svg>
+                      <span>Voltar para a página inicial</span>
+                    </Link>
+                    <Link
+                      href="/login"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="w-full"
+                    >
+                      <Button
+                        variant="primary"
+                        fullWidth
+                        className="!bg-[#2E9658] hover:!bg-[#1F6B43] !text-white font-semibold rounded-xl"
+                      >
+                        Fazer login
+                      </Button>
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      href="/login"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="w-full text-center py-2.5 text-sm font-semibold text-[#202522] hover:bg-neutral-100 rounded-lg transition-colors"
+                    >
+                      Entrar na conta
+                    </Link>
+                    <Link
+                      href="/cadastro"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="w-full"
+                    >
+                      <Button
+                        variant="primary"
+                        fullWidth
+                        className="!bg-[#2E9658] hover:!bg-[#1F6B43] !text-white font-semibold rounded-xl"
+                      >
+                        Começar agora
+                      </Button>
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </div>

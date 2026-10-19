@@ -19,6 +19,7 @@ import {
   saveAuthSession,
   validateSession,
 } from '@/services/auth';
+import { LandingHeader } from '@/components/landing';
 
 /**
  * Validação de formato de e-mail no frontend.
@@ -201,14 +202,18 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
-      {/* Background decorativo */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-100 rounded-full blur-3xl opacity-60" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary-200 rounded-full blur-3xl opacity-40" />
-      </div>
+    <div className="min-h-screen bg-neutral-50 flex flex-col relative">
+      {/* Barra de navegação com link para voltar à página inicial */}
+      <LandingHeader />
 
-      <div className="relative sm:mx-auto sm:w-full sm:max-w-md">
+      <main className="flex-1 flex flex-col justify-center py-10 px-4 sm:px-6 lg:px-8 relative">
+        {/* Background decorativo */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-100 rounded-full blur-3xl opacity-60" />
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary-200 rounded-full blur-3xl opacity-40" />
+        </div>
+
+        <div className="relative sm:mx-auto sm:w-full sm:max-w-md">
         {/* Identificação visual do sistema financeiro */}
         <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-primary-700 to-primary-500 shadow-lg shadow-primary-500/25 mb-4 text-white">
@@ -400,6 +405,7 @@ export default function LoginPage() {
           </div>
         </Card>
       </div>
-    </div>
+    </main>
+  </div>
   );
 }

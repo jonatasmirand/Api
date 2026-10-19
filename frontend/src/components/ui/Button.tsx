@@ -26,6 +26,7 @@ export const Button: React.FC<ButtonProps> = ({
   onClick,
   type = 'button',
   fullWidth = false,
+  title,
 }) => {
   const baseClasses = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
   const sizeClass = sizeClasses[size];
@@ -37,6 +38,7 @@ export const Button: React.FC<ButtonProps> = ({
       type={type}
       disabled={disabled || loading}
       onClick={onClick}
+      title={title}
       className={`${baseClasses} ${sizeClass} ${variantClass} ${widthClass} ${className}`}
     >
       {loading && (
