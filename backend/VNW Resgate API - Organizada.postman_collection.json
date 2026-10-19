@@ -27,6 +27,16 @@
       "type": "string"
     },
     {
+      "key": "adminEmail",
+      "value": "admin@fingestao.com",
+      "type": "string"
+    },
+    {
+      "key": "adminPassword",
+      "value": "admin123",
+      "type": "string"
+    },
+    {
       "key": "userId",
       "value": "1",
       "type": "string"
@@ -94,6 +104,64 @@
                   ]
                 },
                 "description": "Cria um novo usuário com role padrão 'people'. Retorna token JWT automaticamente."
+              },
+              "response": []
+            },
+            {
+              "name": "POST - Login como Administrador (admin@fingestao.com)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                      "  const body = pm.response.json();",
+                      "  if (body.data && body.data.token) {",
+                      "    pm.collectionVariables.set('token', body.data.token);",
+                      "    pm.collectionVariables.set('adminToken', body.data.token);",
+                      "  }",
+                      "  if (body.data && body.data.user && body.data.user.id_code) pm.collectionVariables.set('userIdCode', body.data.user.id_code);",
+                      "  if (body.data && body.data.user && body.data.user.id) pm.collectionVariables.set('userId', body.data.user.id);",
+                      "  console.log('Admin autenticado com sucesso! Token salvo na collection.');",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "login"
+                  ]
+                },
+                "description": "Realiza login com a conta de Administrador (admin@fingestao.com). Salva o token JWT de admin automaticamente na variável {{token}} para uso em todas as outras requisições protegidas da collection."
               },
               "response": []
             },
@@ -429,6 +497,57 @@
                   ]
                 },
                 "description": "Busca usuário por ID numérico ou UUID id_code. Requer role admin ou manager."
+              },
+              "response": []
+            },
+            {
+              "name": "POST - Criar novo Administrador (requer token admin)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                      "  const body = pm.response.json();",
+                      "  if (body.data && body.data.user && body.data.user.id_code) {",
+                      "    pm.collectionVariables.set('userIdCode', body.data.user.id_code);",
+                      "    console.log('Novo admin criado com UUID:', body.data.user.id_code);",
+                      "  }",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Novo Administrador FinGestão\",\n  \"email\": \"novo.admin@fingestao.com\",\n  \"password\": \"AdminSeguro123\",\n  \"role\": \"admin\",\n  \"phone\": \"11988887777\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "users"
+                  ]
+                },
+                "description": "Cria um novo usuário diretamente com perfil 'admin'. Requer estar autenticado como admin ou master (o header Bearer Token é enviado automaticamente usando {{token}} obtido no login de admin)."
               },
               "response": []
             },

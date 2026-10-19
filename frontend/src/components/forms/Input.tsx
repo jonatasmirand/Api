@@ -13,10 +13,12 @@ export const Input: React.FC<InputProps> = ({
   type = 'text',
   value,
   onChange,
+  onBlur,
   placeholder,
   disabled = false,
   readOnly = false,
   required = false,
+  autoComplete,
   size = 'md',
   error,
   label,
@@ -62,10 +64,12 @@ export const Input: React.FC<InputProps> = ({
           inputMode={type === 'number' ? 'decimal' : undefined}
           value={value}
           onChange={handleChange}
+          onBlur={onBlur}
           placeholder={placeholder}
           disabled={disabled}
           readOnly={readOnly}
           required={required}
+          autoComplete={autoComplete}
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? errorId : description ? descriptionId : undefined}
           className={`${baseClasses} ${sizeClass} ${errorClass} ${disabledClass} ${leftIcon ? 'pl-10' : ''} ${rightIcon ? 'pr-10' : ''}`}

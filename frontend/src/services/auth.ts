@@ -141,9 +141,92 @@ export function clearAuthSession(): void {
 }
 
 /**
- * Verifica se há sessão ativa.
+ * Valida a sessão atual com o backend.
+ * Se o usuário tiver sido excluído ou o token tiver expirado, limpa o armazenamento local automaticamente.
+ */
+export async function validateSession(clearIfInvalid = true): Promise<{
+  isValid: boolean;
+  user: AuthUser | null;
+  reason?: 'no_token' | 'invalid_or_deleted' | 'network_error';
+}> {
+  if (typeof window === 'undefined') {
+    return { isValid: false, user: null, reason: 'no_token' };
+  }
+
+  const { token, user: localUser } = getStoredAuth();
+
+  if (!token) {
+    if (clearIfInvalid) clearAuthSession();
+    return { isValid: false, user: null, reason: 'no_token' };
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/me`, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (response.status === 401 || response.status === 403 || response.status === 404) {
+      // Usuário foi excluído no banco ou o token foi invalidado/expirou
+      if (clearIfInvalid) {
+        clearAuthSession();
+      }
+      return { isValid: false, user: null, reason: 'invalid_or_deleted' };
+    }
+
+    if (!response.ok) {
+      // Outro status HTTP não-fatal (ex.: 500 temporário)
+      return { isValid: Boolean(localUser), user: localUser };
+    }
+
+    const data = await response.json();
+    const freshUser: AuthUser = data.data?.user;
+
+    if (freshUser) {
+      try {
+        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(freshUser));
+      } catch {}
+      return { isValid: true, user: freshUser };
+    }
+
+    return { isValid: true, user: localUser };
+  } catch {
+    // Falha de rede (ex: backend reiniciando), mantém estado local para evitar logout indesejado
+    return { isValid: Boolean(localUser), user: localUser, reason: 'network_error' };
+  }
+}
+
+/**
+ * Realiza logout informando o backend e limpando a sessão local.
+ */
+export async function logoutApi(): Promise<void> {
+  const { token } = getStoredAuth();
+
+  if (token) {
+    try {
+      await fetch(`${API_BASE_URL}/auth/logout`, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    } catch {
+      // Silenciosamente ignora falha de rede e limpa dados locais abaixo
+    }
+  }
+
+  clearAuthSession();
+}
+
+/**
+ * Verifica se há sessão ativa localmente.
  */
 export function isAuthenticated(): boolean {
   const { token } = getStoredAuth();
   return Boolean(token);
 }
+

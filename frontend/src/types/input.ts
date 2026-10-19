@@ -5,10 +5,12 @@ export interface BaseInputProps {
   name?: string;
   value?: string;
   onChange?: (value: string) => void;
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
   placeholder?: string;
   disabled?: boolean;
   readOnly?: boolean;
   required?: boolean;
+  autoComplete?: string;
   size?: InputSize;
   error?: string;
   className?: string;
@@ -35,6 +37,8 @@ export interface TextareaProps extends BaseInputProps {
 }
 
 export interface FormFieldProps {
+  id?: string;
+  htmlFor?: string;
   label?: string;
   description?: string;
   required?: boolean;

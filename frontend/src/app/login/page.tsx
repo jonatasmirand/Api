@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Alert } from '@/components/feedback/Alert';
 import { LoadingState } from '@/components/feedback/LoadingState';
@@ -12,96 +12,188 @@ import { Card } from '@/components/data-display/Card';
 import { AuthUser } from '@/types';
 import {
   AuthError,
+  clearAuthSession,
   getRememberedEmail,
   getStoredAuth,
   loginApi,
   saveAuthSession,
+  validateSession,
 } from '@/services/auth';
+
+/**
+ * Validação de formato de e-mail no frontend.
+ * Garante usuário, domínio e TLD com pelo menos 2 caracteres.
+ */
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
 export default function LoginPage() {
   const router = useRouter();
 
+  // Referências para foco automático no primeiro campo inválido
+  const emailInputRef = useRef<HTMLInputElement>(null);
+  const passwordInputRef = useRef<HTMLInputElement>(null);
+
+  // Valores dos campos
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const [emailError, setEmailError] = useState<string | undefined>();
-  const [passwordError, setPasswordError] = useState<string | undefined>();
+  // Rastreamento de interação (blur / tentativa de envio)
+  const [touched, setTouched] = useState({
+    email: false,
+    password: false,
+  });
 
+  // Mensagens de erro de validação do formulário
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+
+  // Estados de requisição e resposta da API
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [authenticatedUser, setAuthenticatedUser] = useState<AuthUser | null>(null);
 
-  // Carrega e-mail lembrado ou sessão pré-existente
+  // Carrega e-mail lembrado e limpa sessões inexistentes/inválidas do backend
   useEffect(() => {
     const savedEmail = getRememberedEmail();
-    const { user } = getStoredAuth();
-
-    if (savedEmail || user) {
+    if (savedEmail) {
       queueMicrotask(() => {
-        if (savedEmail) {
-          setEmail(savedEmail);
-        }
-        if (user) {
-          setAuthenticatedUser(user);
-        }
+        setEmail(savedEmail);
       });
     }
+
+    // Garante que a tela de login inicial sempre exiba os campos de autenticação
+    const { user, token } = getStoredAuth();
+    if (user && token) {
+      validateSession(true).then(({ isValid }) => {
+        if (!isValid) {
+          clearAuthSession();
+        }
+      });
+    } else {
+      clearAuthSession();
+    }
+
+    // Inicializa sem usuário autenticado prévio para sempre exibir o formulário de login
+    queueMicrotask(() => {
+      setAuthenticatedUser(null);
+    });
   }, []);
 
-  const validate = (): boolean => {
-    let isValid = true;
-    setEmailError(undefined);
-    setPasswordError(undefined);
-    setApiError(null);
+  /**
+   * Valida o campo de e-mail:
+   * 1. Campo obrigatório
+   * 2. Formato válido de e-mail
+   */
+  const validateEmailField = (value: string): string | null => {
+    const trimmed = value.trim();
 
-    const emailTrimmed = email.trim();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!emailTrimmed) {
-      setEmailError('Informe seu e-mail');
-      isValid = false;
-    } else if (!emailRegex.test(emailTrimmed)) {
-      setEmailError('Informe um e-mail válido');
-      isValid = false;
+    if (!trimmed) {
+      return 'O e-mail é obrigatório.';
     }
 
-    if (!password) {
-      setPasswordError('Informe sua senha');
-      isValid = false;
-    } else if (password.length < 6) {
-      setPasswordError('A senha deve ter no mínimo 6 caracteres');
-      isValid = false;
+    if (!EMAIL_REGEX.test(trimmed)) {
+      return 'Informe um e-mail válido (ex.: usuario@empresa.com).';
     }
 
-    return isValid;
+    return null;
   };
 
+  /**
+   * Valida o campo de senha:
+   * 1. Campo obrigatório
+   * 2. Mínimo de 6 caracteres (exigido pelo backend)
+   */
+  const validatePasswordField = (value: string): string | null => {
+    if (!value) {
+      return 'A senha é obrigatória.';
+    }
+
+    if (value.length < 6) {
+      return 'A senha deve conter no mínimo 6 caracteres.';
+    }
+
+    return null;
+  };
+
+  // Manipuladores de alteração de valor com revalidação dinâmica
+  const handleEmailChange = (val: string) => {
+    setEmail(val);
+    if (apiError) setApiError(null);
+
+    if (touched.email) {
+      setEmailError(validateEmailField(val));
+    }
+  };
+
+  const handlePasswordChange = (val: string) => {
+    setPassword(val);
+    if (apiError) setApiError(null);
+
+    if (touched.password) {
+      setPasswordError(validatePasswordField(val));
+    }
+  };
+
+  // Manipuladores de blur (validação ao sair do campo)
+  const handleEmailBlur = () => {
+    setTouched((prev) => ({ ...prev, email: true }));
+    setEmailError(validateEmailField(email));
+  };
+
+  const handlePasswordBlur = () => {
+    setTouched((prev) => ({ ...prev, password: true }));
+    setPasswordError(validatePasswordField(password));
+  };
+
+  /**
+   * Submissão do formulário:
+   * - Executa todas as validações de frontend.
+   * - Impede o envio à API caso haja qualquer campo inválido.
+   * - Move o foco para o primeiro campo com inconsistência.
+   * - Não registra senhas ou tokens em logs.
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validate()) {
+    // Marca todos os campos como tocados
+    setTouched({ email: true, password: true });
+
+    const emailErr = validateEmailField(email);
+    const passErr = validatePasswordField(password);
+
+    setEmailError(emailErr);
+    setPasswordError(passErr);
+    setApiError(null);
+
+    // IMPEDE O ENVIO SE HOUVER CAMPOS INVÁLIDOS
+    if (emailErr || passErr) {
+      if (emailErr) {
+        emailInputRef.current?.focus();
+      } else if (passErr) {
+        passwordInputRef.current?.focus();
+      }
       return;
     }
 
     setIsLoading(true);
-    setApiError(null);
 
     try {
-      const data = await loginApi({ email, password });
+      // Chamada à API sem expor senhas ou tokens em logs
+      const data = await loginApi({ email: email.trim(), password });
 
-      // Salva sessão no storage/cookie
+      // Salva sessão localmente
       saveAuthSession(data, true);
       setAuthenticatedUser(data.user);
 
-      // Redireciona após breve confirmação
+      // Redireciona após confirmação para a aplicação
       setTimeout(() => {
-        router.push('/');
+        router.push('/dashboard');
       }, 1000);
     } catch (err) {
       if (err instanceof AuthError) {
         setApiError(err.message);
       } else {
-        setApiError('Ocorreu um erro inesperado ao tentar realizar o login.');
+        setApiError('Não foi possível realizar o login. Tente novamente.');
       }
     } finally {
       setIsLoading(false);
@@ -150,7 +242,10 @@ export default function LoginPage() {
         </div>
 
         {/* Card principal do formulário */}
-        <Card padding="lg" className="shadow-xl shadow-neutral-200/50 border border-neutral-200/80 bg-white/95 backdrop-blur-sm relative">
+        <Card
+          padding="lg"
+          className="shadow-xl shadow-neutral-200/50 border border-neutral-200/80 bg-white/95 backdrop-blur-sm relative"
+        >
           {authenticatedUser ? (
             <div className="space-y-4 py-2 text-center">
               <Alert
@@ -164,14 +259,24 @@ export default function LoginPage() {
               <Button
                 variant="primary"
                 fullWidth
-                onClick={() => router.push('/')}
+                onClick={() => router.push('/dashboard')}
               >
                 Ir para o Painel
+              </Button>
+              <Button
+                variant="secondary"
+                fullWidth
+                onClick={() => {
+                  clearAuthSession();
+                  setAuthenticatedUser(null);
+                }}
+              >
+                Entrar com outra conta
               </Button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-              {/* Mensagem de erro para credenciais inválidas ou falha de conexão */}
+              {/* Mensagem de erro da API para credenciais inválidas */}
               {apiError && (
                 <Alert
                   variant="error"
@@ -182,51 +287,70 @@ export default function LoginPage() {
                 />
               )}
 
-              {/* Campo de e-mail utilizando FormField e Input */}
+              {/* Campo E-mail com validação obrigatória e de formato */}
               <FormField
+                id="login-email"
+                htmlFor="login-email"
                 label="E-mail"
                 required
-                error={emailError}
+                error={emailError ?? undefined}
               >
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="seu.email@exemplo.com"
-                  value={email}
-                  onChange={(val) => {
-                    setEmail(val);
-                    if (emailError) setEmailError(undefined);
-                  }}
-                  disabled={isLoading}
-                  leftIcon={
-                    <svg className="w-5 h-5 text-neutral-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
-                    </svg>
-                  }
-                />
+                <div ref={emailInputRef as unknown as React.RefObject<HTMLDivElement>}>
+                  <Input
+                    id="login-email"
+                    name="email"
+                    type="email"
+                    placeholder="seu.email@exemplo.com"
+                    autoComplete="email"
+                    value={email}
+                    onChange={handleEmailChange}
+                    onBlur={handleEmailBlur}
+                    error={emailError ?? undefined}
+                    disabled={isLoading}
+                    leftIcon={
+                      <svg
+                        className="w-5 h-5 text-neutral-400"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={1.8}
+                        stroke="currentColor"
+                        aria-hidden="true"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"
+                        />
+                      </svg>
+                    }
+                  />
+                </div>
               </FormField>
 
-              {/* Campo de senha utilizando FormField e PasswordInput (com opção de mostrar/ocultar senha embutida) */}
+              {/* Campo Senha com validação obrigatória e tamanho mínimo */}
               <FormField
+                id="login-password"
+                htmlFor="login-password"
                 label="Senha"
                 required
-                error={passwordError}
+                error={passwordError ?? undefined}
               >
-                <PasswordInput
-                  id="password"
-                  name="password"
-                  placeholder="Digite sua senha"
-                  value={password}
-                  onChange={(val) => {
-                    setPassword(val);
-                    if (passwordError) setPasswordError(undefined);
-                  }}
-                  disabled={isLoading}
-                />
+                <div ref={passwordInputRef as unknown as React.RefObject<HTMLDivElement>}>
+                  <PasswordInput
+                    id="login-password"
+                    name="password"
+                    placeholder="Digite sua senha"
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={handlePasswordChange}
+                    onBlur={handlePasswordBlur}
+                    error={passwordError ?? undefined}
+                    disabled={isLoading}
+                  />
+                </div>
               </FormField>
 
-              {/* Indicador visual adicional durante o envio */}
+              {/* Indicador visual durante o envio */}
               {isLoading && (
                 <div className="py-1">
                   <LoadingState size="sm" message="Validando credenciais..." />
@@ -242,8 +366,19 @@ export default function LoginPage() {
                 loading={isLoading}
                 rightIcon={
                   !isLoading ? (
-                    <svg className="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                    <svg
+                      className="w-4 h-4 ml-1"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={2}
+                      stroke="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"
+                      />
                     </svg>
                   ) : undefined
                 }
